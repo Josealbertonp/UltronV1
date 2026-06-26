@@ -11,8 +11,8 @@ using UltronV1.Core.Domain;
 using UltronV1.Core.Engine;
 using UltronV1.Core.Execution;
 using UltronV1.Core.Mnq;
-using UltronV1.Core.OrderFlow;
 using UltronV1.Core.Signals;
+using NinjaTrader.NinjaScript.Ultron;
 #endregion
 
 namespace NinjaTrader.NinjaScript.Strategies
@@ -20,27 +20,19 @@ namespace NinjaTrader.NinjaScript.Strategies
     /// <summary>
     /// Phase 5 — Outcome Collection &amp; Paper Execution.
     /// Consumes Ultron signals only (no new entry rules). Writes outcomes.jsonl for ML/Validation.
+    /// Authoritative execution: <see cref="TradeCycleTracker"/> / PaperBarSim in Core.
+    /// Sim101 orders (opt-in) are visual only and never write outcomes.
     /// Use on Replay / Sim101 / Paper — not for live capital.
     /// </summary>
     public class UltronV1Paper : Strategy
     {
+        const string Sim101VisualLog = "Sim101 visual only — outcome source PaperBarSim";
         UltronEngine _engine;
         DatasetEngine _dataset;
         TradeCycleTracker _tradeCycle;
-        NtPrintLogger _logger;
-
-        EMA _emaFast;
-        EMA _emaSlow;
-        EMA _emaMtf;
-        ADX _adx;
-        ATR _atr;
-        RSI _rsi;
-        DonchianChannel _donchian;
-        SMA _volSma;
-
-        double _vwapNumerator;
-        double _vwapDenominator;
-        int _vwapBarCount;
+        UltronNtLogger _logger;
+        UltronIndicatorBundle _indicators = new UltronIndicatorBundle();
+        UltronVwapTracker _vwap = new UltronVwapTracker();
         bool _vwapResetToday;
 
         int _outcomesRecorded;
@@ -72,7 +64,7 @@ namespace NinjaTrader.NinjaScript.Strategies
                 PaperTakeProfitTicks = 32;
                 PaperMaxBarsInTrade = 48;
                 MinTierForEntry = SignalTier.B;
-                SubmitSimOrders = true;
+                SubmitSimOrders = false;
             }
             else if (State == State.Configure)
             {
@@ -80,7 +72,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
             else if (State == State.DataLoaded)
             {
-                _logger = new NtPrintLogger(this);
+                _logger = new UltronNtLogger(Print);
 
                 var cfg = new UltronConfig
                 {
@@ -112,15 +104,9 @@ namespace NinjaTrader.NinjaScript.Strategies
                 if (!_engine.IsContractValid)
                     Print("[UltronV1Paper] INVALID CONTRACT — MNQ 09-26 required.");
 
-                _emaFast = EMA(Close, 9);
-                _emaSlow = EMA(Close, 21);
-                _adx = ADX(Close, 14);
-                _atr = ATR(Close, 14);
-                _rsi = RSI(Close, 14, 3);
-                _donchian = DonchianChannel(Close, 20);
-                _volSma = SMA(Volume, 20);
-                _emaMtf = EMA(Closes[1], 21);
+                _indicators.Create(this);
 
+                LogPaperExecutionMode();
                 Print(string.Format("[UltronV1Paper] Outcome collection started. Session={0}", _dataset.SessionId));
             }
             else if (State == State.Terminated)
@@ -135,18 +121,11 @@ namespace NinjaTrader.NinjaScript.Strategies
 
         protected override void OnMarketData(MarketDataEventArgs e)
         {
-            if (_engine == null || !_engine.IsContractValid)
-                return;
-            if (e.MarketDataType != MarketDataType.Last)
-                return;
-
-            _engine.ProcessTick(new TickEvent(
-                e.Time.ToUniversalTime().Ticks,
-                e.Price,
-                e.Volume,
-                GetCurrentBid(),
-                GetCurrentAsk(),
-                MnqContractSpec.PriceToTickIndex(e.Price)));
+            UltronTickFeed.ProcessLastTick(_engine, e, (out double bid, out double ask) =>
+            {
+                bid = GetCurrentBid();
+                ask = GetCurrentAsk();
+            });
         }
 
         protected override void OnBarUpdate()
@@ -202,12 +181,40 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
 
             if (SubmitSimOrders && Position.MarketPosition != MarketPosition.Flat)
+                TrySubmitSim101VisualExit();
+        }
+
+        void LogPaperExecutionMode()
+        {
+            Print("[UltronV1Paper] Outcome source: TradeCycleTracker / PaperBarSim (authoritative)");
+            if (SubmitSimOrders)
+                Print("[UltronV1Paper] " + Sim101VisualLog);
+        }
+
+        /// <summary>Sim101 broker orders for chart visibility only — not used for outcomes.jsonl.</summary>
+        void TrySubmitSim101VisualEntry(TradeDirection direction)
+        {
+            if (direction == TradeDirection.Long)
             {
-                if (Position.MarketPosition == MarketPosition.Long)
-                    ExitLong("UV1_Exit", "UV1_L");
-                else if (Position.MarketPosition == MarketPosition.Short)
-                    ExitShort("UV1_Exit", "UV1_S");
+                EnterLong(1, "UV1_L");
+                SetStopLoss(CalculationMode.Ticks, PaperStopLossTicks);
+                SetProfitTarget(CalculationMode.Ticks, PaperTakeProfitTicks);
             }
+            else
+            {
+                EnterShort(1, "UV1_S");
+                SetStopLoss(CalculationMode.Ticks, PaperStopLossTicks);
+                SetProfitTarget(CalculationMode.Ticks, PaperTakeProfitTicks);
+            }
+        }
+
+        /// <summary>Sim101 broker exit for chart visibility only — not used for outcomes.jsonl.</summary>
+        void TrySubmitSim101VisualExit()
+        {
+            if (Position.MarketPosition == MarketPosition.Long)
+                ExitLong("UV1_Exit", "UV1_L");
+            else if (Position.MarketPosition == MarketPosition.Short)
+                ExitShort("UV1_Exit", "UV1_S");
         }
 
         void TryOpenPaperTrade(BarEvaluationResult result)
@@ -235,52 +242,23 @@ namespace NinjaTrader.NinjaScript.Strategies
             if (!SubmitSimOrders)
                 return;
 
-            if (result.Signal.Direction == TradeDirection.Long)
-            {
-                EnterLong(1, "UV1_L");
-                SetStopLoss(CalculationMode.Ticks, PaperStopLossTicks);
-                SetProfitTarget(CalculationMode.Ticks, PaperTakeProfitTicks);
-            }
-            else
-            {
-                EnterShort(1, "UV1_S");
-                SetStopLoss(CalculationMode.Ticks, PaperStopLossTicks);
-                SetProfitTarget(CalculationMode.Ticks, PaperTakeProfitTicks);
-            }
+            TrySubmitSim101VisualEntry(result.Signal.Direction);
         }
 
         IndicatorSnapshot BuildIndicatorSnapshot()
         {
-            int accelBars = _engine.Config.AccelLookbackBars;
-            double adxPrev = _adx.IsValidDataPoint(accelBars) ? _adx[accelBars] : _adx[0];
-
-            return new IndicatorSnapshot(
-                _emaFast[0], _emaSlow[0], _adx[0], adxPrev, _rsi[0], _atr[0],
-                _vwapDenominator > 0 ? _vwapNumerator / _vwapDenominator : Close[0],
-                _vwapBarCount,
-                _donchian.Upper[0], _donchian.Lower[0],
-                _donchian.IsValidDataPoint(1) ? _donchian.Upper[1] : _donchian.Upper[0],
-                _donchian.IsValidDataPoint(1) ? _donchian.Lower[1] : _donchian.Lower[0],
-                _volSma.IsValidDataPoint(0) ? _volSma[0] : Volume[0],
-                _emaMtf.IsValidDataPoint(0) ? _emaMtf[0] : _emaFast[0],
-                _emaMtf.IsValidDataPoint(2) ? _emaMtf[2] : _emaMtf[0],
-                true);
+            return _indicators.BuildSnapshot(_vwap, Close[0], Volume[0], _engine.Config.AccelLookbackBars);
         }
 
         void UpdateVwap()
         {
             if (Bars.IsFirstBarOfSession)
             {
-                _vwapNumerator = 0;
-                _vwapDenominator = 0;
-                _vwapBarCount = 0;
+                _vwap.Reset();
                 _vwapResetToday = true;
             }
 
-            double typical = (High[0] + Low[0] + Close[0]) / 3.0;
-            _vwapNumerator += typical * Volume[0];
-            _vwapDenominator += Volume[0];
-            _vwapBarCount++;
+            _vwap.UpdateBar(High[0], Low[0], Close[0], Volume[0], treatZeroVolumeAsOne: false);
         }
 
         #region Properties
@@ -305,18 +283,9 @@ namespace NinjaTrader.NinjaScript.Strategies
         public SignalTier MinTierForEntry { get; set; }
 
         [NinjaScriptProperty]
-        [Display(Name = "Submit Sim101 Orders", Order = 5, GroupName = "Ultron Paper")]
+        [Display(Name = "Submit Sim101 Orders (visual only)", Order = 5, GroupName = "Ultron Paper")]
         public bool SubmitSimOrders { get; set; }
 
         #endregion
-
-        sealed class NtPrintLogger : IUltronLogger
-        {
-            readonly Strategy _host;
-            public NtPrintLogger(Strategy host) { _host = host; }
-            public void Info(string message) { _host.Print(message); }
-            public void Warn(string message) { _host.Print(message); }
-            public void Error(string message) { _host.Print(message); }
-        }
     }
 }

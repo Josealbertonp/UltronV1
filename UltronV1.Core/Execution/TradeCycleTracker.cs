@@ -6,7 +6,8 @@ using UltronV1.Core.Signals;
 namespace UltronV1.Core.Execution
 {
     /// <summary>
-    /// Paper trade lifecycle: open on accepted signal, track MFE/MAE, close on stop/target/time.
+    /// Paper trade lifecycle (PaperBarSim): open on accepted signal, track MFE/MAE, close on stop/target/time.
+    /// Authoritative bar-OHLC simulator for outcomes.jsonl — deterministic and replay-safe.
     /// No entry rules — consumes Ultron signals only.
     /// </summary>
     public sealed class TradeCycleTracker
