@@ -1,0 +1,41 @@
+# Build outputs
+**/bin/
+**/obj/
+**/.vs/
+
+# .NET
+*.user
+*.suo
+*.cache
+*.dll
+*.pdb
+!NinjaTrader/**/*.dll
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.venv/
+**/venv/
+**/*.egg-info/
+**/.mypy_cache/
+
+# ML artifacts / datasets (local only)
+**/models/
+**/reports/
+**/dataset/sessions/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+Desktop.ini
+
+# Secrets
+.env
+*.env
+credentials.json
+
+# NuGet
+*.nupkg

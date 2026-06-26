@@ -1,0 +1,51 @@
+{
+  "recordSchemaVersion": 1,
+  "description": "Ultron V1 opportunity record — JSON Lines, one object per line",
+  "primaryKey": "signalId",
+  "outcomeJoinKey": "signalId",
+  "files": {
+    "opportunities": "opportunities.jsonl",
+    "outcomes": "outcomes.jsonl",
+    "manifest": "manifest.json"
+  },
+  "versionFields": [
+    "versions.ultron",
+    "versions.featureSchema",
+    "versions.score",
+    "versions.config",
+    "versions.scoreProfileHash",
+    "versions.recordSchema"
+  ],
+  "requiredFields": [
+    "signalId",
+    "timestampUtc",
+    "instrument",
+    "versions",
+    "decision",
+    "features",
+    "featureNames"
+  ],
+  "outcomeFields": [
+    "signalId",
+    "direction",
+    "entryAtUtc",
+    "closedAtUtc",
+    "entryPrice",
+    "exitPrice",
+    "stopPrice",
+    "targetPrice",
+    "isWin",
+    "mfeTicks",
+    "maeTicks",
+    "rMultiple",
+    "realizedPnLTicks",
+    "realizedPnLUsd",
+    "barsInTrade",
+    "secondsInTrade",
+    "exitReason",
+    "executionMode",
+    "label"
+  ],
+  "featureCount": 40,
+  "featureSchemaFile": "ultron_mnq_feature_schema_v1.json"
+}
