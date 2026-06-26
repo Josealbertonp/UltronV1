@@ -33,7 +33,6 @@ namespace NinjaTrader.NinjaScript.Strategies
         UltronNtLogger _logger;
         UltronIndicatorBundle _indicators = new UltronIndicatorBundle();
         UltronVwapTracker _vwap = new UltronVwapTracker();
-        bool _vwapResetToday;
 
         int _outcomesRecorded;
 
@@ -253,10 +252,7 @@ namespace NinjaTrader.NinjaScript.Strategies
         void UpdateVwap()
         {
             if (Bars.IsFirstBarOfSession)
-            {
                 _vwap.Reset();
-                _vwapResetToday = true;
-            }
 
             _vwap.UpdateBar(High[0], Low[0], Close[0], Volume[0], treatZeroVolumeAsOne: false);
         }

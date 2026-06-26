@@ -17,12 +17,5 @@ namespace UltronV1.Core.Features
         {
             Array.Clear(_values, 0, _values.Length);
         }
-
-        public FeatureVector Clone()
-        {
-            var copy = new FeatureVector();
-            Array.Copy(_values, copy._values, _values.Length);
-            return copy;
-        }
     }
 }

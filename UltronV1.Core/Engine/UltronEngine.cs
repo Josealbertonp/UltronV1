@@ -38,7 +38,6 @@ namespace UltronV1.Core.Engine
         public UltronConfig Config => _config;
         public DatasetEngine? Dataset => _dataset;
         public bool IsContractValid => _contractValid;
-        public OrderFlowState CurrentOrderFlow => _tickProcessor.CurrentBarState;
         public long TotalTicksProcessed { get; private set; }
         public BarEvaluationResult? LastResult { get; private set; }
 
