@@ -12,11 +12,11 @@ using NinjaTrader.Gui.Tools;
 using NinjaTrader.NinjaScript;
 using NinjaTrader.NinjaScript.DrawingTools;
 using NinjaTrader.NinjaScript.Indicators;
-using UltronV1.Core.Domain;
-using UltronV1.Core.Dataset;
-using UltronV1.Core.Engine;
-using UltronV1.Core.Mnq;
-using UltronV1.Core.Signals;
+using global::UltronV1.Core.Domain;
+using global::UltronV1.Core.Dataset;
+using global::UltronV1.Core.Engine;
+using global::UltronV1.Core.Mnq;
+using global::UltronV1.Core.Signals;
 using NinjaTrader.NinjaScript.Ultron;
 #endregion
 
@@ -31,7 +31,7 @@ namespace NinjaTrader.NinjaScript.Indicators
         UltronVwapTracker _vwap = new UltronVwapTracker();
         bool _vwapResetToday;
 
-        string _hudTag = "UltronV1_HUD";
+        const string HudTag = "UltronV1_HUD";
 
         protected override void OnStateChange()
         {
@@ -44,6 +44,10 @@ namespace NinjaTrader.NinjaScript.Indicators
                 DisplayInDataBox = true;
                 DrawOnPricePanel = true;
                 IsSuspendedWhileInactive = true;
+
+                AccountName = "Sim101";
+                ATMTemplateName = string.Empty;
+                Quantity = 1;
 
                 EnableDiagnostics = true;
                 EnableExplainMode = true;
@@ -120,6 +124,8 @@ namespace NinjaTrader.NinjaScript.Indicators
                 return;
             if (CurrentBar < 25)
                 return;
+            if (!UltronWarmupRequirements.IsMtfSeriesReady(CurrentBars[1]))
+                return;
 
             UpdateVwap();
 
@@ -152,7 +158,7 @@ namespace NinjaTrader.NinjaScript.Indicators
             if (result.Signal != null && ShowSignalArrows && result.Signal.Tier >= MinTierForArrow)
                 DrawSignal(result);
 
-            if (ShowHud)
+            if (ShowHud && IsFirstTickOfBar)
                 DrawHud(result);
         }
 
@@ -179,6 +185,7 @@ namespace NinjaTrader.NinjaScript.Indicators
         {
             var sig = result.Signal!;
             string tag = "UltronV1_Sig_" + CurrentBar;
+            string label = FormatSignalLabel(sig.Direction, sig.Tier);
             Brush color = sig.Tier == SignalTier.A ? Brushes.LimeGreen
                 : sig.Tier == SignalTier.B ? Brushes.DodgerBlue
                 : Brushes.Goldenrod;
@@ -186,21 +193,26 @@ namespace NinjaTrader.NinjaScript.Indicators
             if (sig.Direction == TradeDirection.Long)
             {
                 Draw.ArrowUp(this, tag, true, 0, Low[0] - 4 * TickSize, color);
-                Draw.Text(this, tag + "_t", sig.Reason, 0, Low[0] - 8 * TickSize, color);
+                Draw.Text(this, tag + "_t", label, 0, Low[0] - 8 * TickSize, color);
             }
             else
             {
                 Draw.ArrowDown(this, tag, true, 0, High[0] + 4 * TickSize, color);
-                Draw.Text(this, tag + "_t", sig.Reason, 0, High[0] + 8 * TickSize, color);
+                Draw.Text(this, tag + "_t", label, 0, High[0] + 8 * TickSize, color);
             }
+        }
 
-            if (EnableExplainMode)
+        static string FormatSignalLabel(TradeDirection direction, SignalTier tier)
+        {
+            string side = direction == TradeDirection.Long ? "BUY" : "SELL";
+            string tierLabel = tier switch
             {
-                string explain = result.Explanation.FormatScoreLines(sig.Direction);
-                Draw.Text(this, tag + "_x", explain, 0,
-                    sig.Direction == TradeDirection.Long ? Low[0] - 14 * TickSize : High[0] + 14 * TickSize,
-                    Brushes.LightGray);
-            }
+                SignalTier.A => "A+",
+                SignalTier.B => "B+",
+                SignalTier.C => "C+",
+                _ => tier.ToString()
+            };
+            return side + " " + tierLabel;
         }
 
         void DrawComparisonMarker(int bar, TradeDirection dir, bool ultronOnly)
@@ -241,23 +253,47 @@ namespace NinjaTrader.NinjaScript.Indicators
                 sb.AppendFormat(CultureInfo.InvariantCulture, "DS {0} rec={1} acc={2}\n",
                     _engine.Dataset.SessionId, _engine.Dataset.RecordCount, _engine.Dataset.AcceptedCount);
 
-            Draw.TextFixed(this, _hudTag, sb.ToString().TrimEnd(),
+            Draw.TextFixed(this, HudTag, sb.ToString().TrimEnd(),
                 TextPosition.TopLeft,
                 Brushes.White,
                 new SimpleFont("Consolas", 11),
                 Brushes.Transparent,
-                Brushes.FromArgb(160, 20, 20, 30),
+                new SolidColorBrush(Color.FromArgb(160, 20, 20, 30)),
                 100);
         }
 
-        #region Properties
+        #region Properties — Execution
 
         [NinjaScriptProperty]
-        [Display(Name = "Enable Diagnostics Log", Order = 1, GroupName = "Ultron V1")]
+        [TypeConverter(typeof(UltronAccountConverter))]
+        [Display(Name = "Account", Order = 1, GroupName = "Execution",
+            Description = "Account for manual order entry (ATM hotkey).")]
+        public string AccountName { get; set; }
+
+        [NinjaScriptProperty]
+        [TypeConverter(typeof(UltronAtmTemplateConverter))]
+        [Display(Name = "ATM Template", Order = 2, GroupName = "Execution",
+            Description = "ATM strategy template for manual execution.")]
+        public string ATMTemplateName { get; set; }
+
+        [NinjaScriptProperty]
+        [Range(1, 100)]
+        [Display(Name = "Quantity", Order = 3, GroupName = "Execution",
+            Description = "Default contract quantity for manual execution.")]
+        public int Quantity { get; set; }
+
+        #endregion
+
+        #region Properties — Ultron V1
+
+        [NinjaScriptProperty]
+        [Display(Name = "Enable Diagnostics Log", Order = 1, GroupName = "Ultron V1",
+            Description = "Bar diagnostics to Output Window.")]
         public bool EnableDiagnostics { get; set; }
 
         [NinjaScriptProperty]
-        [Display(Name = "Enable Explain Mode", Order = 2, GroupName = "Ultron V1")]
+        [Display(Name = "Enable Explain Mode", Order = 2, GroupName = "Ultron V1",
+            Description = "Score breakdown and gate details in Output Window only (not on chart).")]
         public bool EnableExplainMode { get; set; }
 
         [NinjaScriptProperty]
@@ -283,80 +319,3 @@ namespace NinjaTrader.NinjaScript.Indicators
         #endregion
     }
 }
-
-#region NinjaScript generated code
-namespace NinjaTrader.NinjaScript.Indicators
-{
-    public partial class Indicator : NinjaTrader.Gui.NinjaScript.IndicatorRenderBase
-    {
-        private UltronV1[] cacheUltronV1;
-
-        public UltronV1 UltronV1(bool enableDiagnostics, bool enableExplainMode, bool showSignalArrows, bool showHud, bool enableComparisonMode, bool enableDatasetEngine, SignalTier minTierForArrow)
-        {
-            return UltronV1(Input, enableDiagnostics, enableExplainMode, showSignalArrows, showHud, enableComparisonMode, enableDatasetEngine, minTierForArrow);
-        }
-
-        public UltronV1 UltronV1(ISeries<double> input, bool enableDiagnostics, bool enableExplainMode, bool showSignalArrows, bool showHud, bool enableComparisonMode, bool enableDatasetEngine, SignalTier minTierForArrow)
-        {
-            if (cacheUltronV1 != null)
-                for (int idx = 0; idx < cacheUltronV1.Length; idx++)
-                    if (cacheUltronV1[idx] != null
-                        && cacheUltronV1[idx].EnableDiagnostics == enableDiagnostics
-                        && cacheUltronV1[idx].EnableExplainMode == enableExplainMode
-                        && cacheUltronV1[idx].ShowSignalArrows == showSignalArrows
-                        && cacheUltronV1[idx].ShowHud == showHud
-                        && cacheUltronV1[idx].EnableComparisonMode == enableComparisonMode
-                        && cacheUltronV1[idx].EnableDatasetEngine == enableDatasetEngine
-                        && cacheUltronV1[idx].MinTierForArrow == minTierForArrow
-                        && cacheUltronV1[idx].EqualsInput(input))
-                        return cacheUltronV1[idx];
-
-            return CacheIndicator<UltronV1>(
-                new UltronV1
-                {
-                    EnableDiagnostics = enableDiagnostics,
-                    EnableExplainMode = enableExplainMode,
-                    ShowSignalArrows = showSignalArrows,
-                    ShowHud = showHud,
-                    EnableComparisonMode = enableComparisonMode,
-                    EnableDatasetEngine = enableDatasetEngine,
-                    MinTierForArrow = minTierForArrow
-                },
-                input,
-                ref cacheUltronV1);
-        }
-    }
-}
-
-namespace NinjaTrader.NinjaScript.MarketAnalyzerColumns
-{
-    public partial class MarketAnalyzerColumn : MarketAnalyzerColumnBase
-    {
-        public Indicators.UltronV1 UltronV1(bool enableDiagnostics, bool enableExplainMode, bool showSignalArrows, bool showHud, bool enableComparisonMode, bool enableDatasetEngine, SignalTier minTierForArrow)
-        {
-            return indicator.UltronV1(Input, enableDiagnostics, enableExplainMode, showSignalArrows, showHud, enableComparisonMode, enableDatasetEngine, minTierForArrow);
-        }
-
-        public Indicators.UltronV1 UltronV1(ISeries<double> input, bool enableDiagnostics, bool enableExplainMode, bool showSignalArrows, bool showHud, bool enableComparisonMode, bool enableDatasetEngine, SignalTier minTierForArrow)
-        {
-            return indicator.UltronV1(input, enableDiagnostics, enableExplainMode, showSignalArrows, showHud, enableComparisonMode, enableDatasetEngine, minTierForArrow);
-        }
-    }
-}
-
-namespace NinjaTrader.NinjaScript.Strategies
-{
-    public partial class Strategy : NinjaTrader.Gui.NinjaScript.StrategyRenderBase
-    {
-        public Indicators.UltronV1 UltronV1(bool enableDiagnostics, bool enableExplainMode, bool showSignalArrows, bool showHud, bool enableComparisonMode, bool enableDatasetEngine, SignalTier minTierForArrow)
-        {
-            return indicator.UltronV1(Input, enableDiagnostics, enableExplainMode, showSignalArrows, showHud, enableComparisonMode, enableDatasetEngine, minTierForArrow);
-        }
-
-        public Indicators.UltronV1 UltronV1(ISeries<double> input, bool enableDiagnostics, bool enableExplainMode, bool showSignalArrows, bool showHud, bool enableComparisonMode, bool enableDatasetEngine, SignalTier minTierForArrow)
-        {
-            return indicator.UltronV1(input, enableDiagnostics, enableExplainMode, showSignalArrows, showHud, enableComparisonMode, enableDatasetEngine, minTierForArrow);
-        }
-    }
-}
-#endregion

@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using UltronV1.Core.Signals;
+using global::UltronV1.Core.Signals;
 
 namespace NinjaTrader.NinjaScript.Indicators
 {
@@ -49,7 +49,7 @@ namespace NinjaTrader.NinjaScript.Indicators
             _csv = null;
         }
 
-        public TradeDirection DetectNightRangerOnBar(NinjaTrader.NinjaScript.Indicator host, int barIndex)
+        public TradeDirection DetectNightRangerOnBar(Indicator host, int barIndex)
         {
             string tag = NrTagPrefix + barIndex;
             foreach (var draw in host.DrawObjects)

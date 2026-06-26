@@ -59,6 +59,56 @@ function Test-NinjaTraderRunning {
     return $false
 }
 
+function Register-Nt8CompileReference {
+    param(
+        [string]$DocumentsRoot,
+        [string]$CustomRoot
+    )
+
+    if ($WhatIfPreference) {
+        Write-UltronHost "[Ultron] WhatIf: would register UltronV1.Core.dll in Config.xml and csproj." "DarkYellow"
+        return
+    }
+
+    $configPath = Join-Path $DocumentsRoot "Config.xml"
+    $refToken = Join-Path $CustomRoot "UltronV1.Core.dll"
+    $csprojPath = Join-Path $CustomRoot "NinjaTrader.Custom.csproj"
+    $dllPath = Join-Path $CustomRoot "UltronV1.Core.dll"
+
+    if (Test-Path -LiteralPath $configPath) {
+        $configText = Get-Content -LiteralPath $configPath -Raw
+        if ($configText -notmatch 'UltronV1\.Core\.dll') {
+            $insert = "      <string>$refToken</string>"
+            $anchor = '      <string>*MyDocuments*\NinjaTrader 8\bin\Custom\CABABOM.dll</string>'
+            if ($configText.Contains($anchor)) {
+                $configText = $configText.Replace($anchor, "$anchor`r`n$insert")
+                Set-Content -LiteralPath $configPath -Value $configText -Encoding UTF8 -NoNewline
+                Write-UltronHost "[Ultron] Registered UltronV1.Core.dll in Config.xml (NinjaScript compile references)." "Green"
+            }
+            else {
+                Write-UltronHost "[Ultron] WARNING: CABABOM anchor missing in Config.xml; add UltronV1.Core.dll via NinjaScript References." "Yellow"
+            }
+        }
+    }
+
+    if (Test-Path -LiteralPath $csprojPath) {
+        $csprojText = Get-Content -LiteralPath $csprojPath -Raw
+        if ($csprojText -notmatch 'UltronV1\.Core') {
+            $refBlock = @"
+    <Reference Include="UltronV1.Core">
+      <HintPath>$dllPath</HintPath>
+    </Reference>
+"@
+            $anchor = '    <Reference Include="NinjaTrader.Vendor">'
+            if ($csprojText.Contains($anchor)) {
+                $csprojText = $csprojText.Replace($anchor, "$refBlock$anchor")
+                Set-Content -LiteralPath $csprojPath -Value $csprojText -Encoding UTF8 -NoNewline
+                Write-UltronHost "[Ultron] Registered UltronV1.Core in NinjaTrader.Custom.csproj." "Green"
+            }
+        }
+    }
+}
+
 function Confirm-Deploy {
     param(
         [int]$FileCount,
@@ -77,7 +127,7 @@ function Confirm-Deploy {
 }
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$CoreDllSource = Join-Path $RepoRoot "UltronV1.Core\bin\Release\netstandard2.0\UltronV1.Core.dll"
+$CoreDllSource = Join-Path $RepoRoot "UltronV1.Core\bin\Release\net48\UltronV1.Core.dll"
 $NinjaTraderSource = Join-Path $RepoRoot "NinjaTrader"
 
 Write-UltronHost "[Ultron] NT8 deploy starting..." "Cyan"
@@ -100,7 +150,7 @@ Write-UltronHost "[Ultron] Custom folder:  $CustomRoot"
 if (-not (Test-Path -LiteralPath $CoreDllSource)) {
     Write-UltronHost "[Ultron] ERROR: UltronV1.Core.dll not found." "Red"
     Write-UltronHost "[Ultron] Expected: $CoreDllSource" "Red"
-    Write-UltronHost "[Ultron] Run: dotnet build UltronV1.Core -c Release" "Red"
+    Write-UltronHost "[Ultron] Run: dotnet build UltronV1.Core -c Release -f net48" "Red"
     exit 1
 }
 
@@ -170,6 +220,8 @@ foreach ($entry in $DeployMap) {
         }
     }
 }
+
+Register-Nt8CompileReference -DocumentsRoot $resolvedDocuments -CustomRoot $CustomRoot
 
 $Stopwatch.Stop()
 

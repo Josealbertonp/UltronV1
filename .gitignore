@@ -23,6 +23,10 @@
 # ML artifacts / datasets (local only)
 **/models/
 **/reports/
+**/trained_models/
+**/datasets/*.parquet
+**/champion_run.log
+**/diag_*.log
 **/dataset/sessions/
 !UltronV1.Python/tests/fixtures/dataset/sessions/
 !UltronV1.Python/tests/fixtures/dataset/sessions/**

@@ -1,9 +1,9 @@
 using NinjaTrader.Cbi;
 using NinjaTrader.Data;
 using NinjaTrader.NinjaScript;
-using UltronV1.Core.Engine;
-using UltronV1.Core.Mnq;
-using UltronV1.Core.OrderFlow;
+using global::UltronV1.Core.Engine;
+using global::UltronV1.Core.Mnq;
+using global::UltronV1.Core.OrderFlow;
 
 namespace NinjaTrader.NinjaScript.Ultron
 {

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ultrontraining"
+version = "2.0.0rc3"
+description = "Ultron RC2 Phase 3 — offline ML training pipeline (win probability)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "scipy>=1.11",
+    "scikit-learn>=1.3",
+    "xgboost>=2.0",
+    "lightgbm>=4.0",
+    "catboost>=1.2",
+    "shap>=0.44",
+    "matplotlib>=3.8",
+    "jinja2>=3.1",
+    "onnx>=1.15",
+    "skl2onnx>=1.16",
+    "onnxmltools>=1.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+ultrontrain = "ultrontraining.cli.train:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ultrontraining*"]

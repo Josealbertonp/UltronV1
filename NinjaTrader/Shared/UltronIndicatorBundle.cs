@@ -1,12 +1,27 @@
 using NinjaTrader.NinjaScript;
 using NinjaTrader.NinjaScript.Indicators;
-using UltronV1.Core.Domain;
+using NinjaTrader.NinjaScript.Strategies;
+using global::UltronV1.Core.Domain;
 
 namespace NinjaTrader.NinjaScript.Ultron
 {
     /// <summary>Standard Ultron indicator set + snapshot builder (Indicator and Paper).</summary>
     public sealed class UltronIndicatorBundle
     {
+        public const int EmaFastPeriod = 9;
+        public const int EmaSlowPeriod = 21;
+        public const int AdxPeriod = 14;
+        public const int AtrPeriod = 14;
+        public const int RsiPeriod = 14;
+        public const int RsiSmooth = 3;
+        public const int DonchianPeriod = 20;
+        public const int VolSmaPeriod = 20;
+        public const int DonchianMaxBarsAgo = 1;
+
+        /// <summary>MTF EMA on Closes[1]; deepest barsAgo read in BuildSnapshot.</summary>
+        public const int MtfEmaPeriod = 21;
+        public const int MtfEmaMaxBarsAgo = 2;
+
         public EMA EmaFast { get; private set; }
         public EMA EmaSlow { get; private set; }
         public EMA EmaMtf { get; private set; }
@@ -16,16 +31,28 @@ namespace NinjaTrader.NinjaScript.Ultron
         public DonchianChannel Donchian { get; private set; }
         public SMA VolSma { get; private set; }
 
-        public void Create(NinjaScriptBase script)
+        public void Create(Indicator script)
         {
-            EmaFast = script.EMA(script.Close, 9);
-            EmaSlow = script.EMA(script.Close, 21);
-            Adx = script.ADX(script.Close, 14);
-            Atr = script.ATR(script.Close, 14);
-            Rsi = script.RSI(script.Close, 14, 3);
-            Donchian = script.DonchianChannel(script.Close, 20);
-            VolSma = script.SMA(script.Volume, 20);
-            EmaMtf = script.EMA(script.Closes[1], 21);
+            EmaFast = script.EMA(script.Close, EmaFastPeriod);
+            EmaSlow = script.EMA(script.Close, EmaSlowPeriod);
+            Adx = script.ADX(script.Close, AdxPeriod);
+            Atr = script.ATR(script.Close, AtrPeriod);
+            Rsi = script.RSI(script.Close, RsiPeriod, RsiSmooth);
+            Donchian = script.DonchianChannel(script.Close, DonchianPeriod);
+            VolSma = script.SMA(script.Volume, VolSmaPeriod);
+            EmaMtf = script.EMA(script.Closes[1], MtfEmaPeriod);
+        }
+
+        public void Create(Strategy script)
+        {
+            EmaFast = script.EMA(script.Close, EmaFastPeriod);
+            EmaSlow = script.EMA(script.Close, EmaSlowPeriod);
+            Adx = script.ADX(script.Close, AdxPeriod);
+            Atr = script.ATR(script.Close, AtrPeriod);
+            Rsi = script.RSI(script.Close, RsiPeriod, RsiSmooth);
+            Donchian = script.DonchianChannel(script.Close, DonchianPeriod);
+            VolSma = script.SMA(script.Volume, VolSmaPeriod);
+            EmaMtf = script.EMA(script.Closes[1], MtfEmaPeriod);
         }
 
         public IndicatorSnapshot BuildSnapshot(
@@ -42,11 +69,11 @@ namespace NinjaTrader.NinjaScript.Ultron
                 vwap.HasVolume ? vwap.Vwap : closeFallback,
                 vwap.BarCount,
                 Donchian.Upper[0], Donchian.Lower[0],
-                Donchian.IsValidDataPoint(1) ? Donchian.Upper[1] : Donchian.Upper[0],
-                Donchian.IsValidDataPoint(1) ? Donchian.Lower[1] : Donchian.Lower[0],
+                Donchian.IsValidDataPoint(DonchianMaxBarsAgo) ? Donchian.Upper[DonchianMaxBarsAgo] : Donchian.Upper[0],
+                Donchian.IsValidDataPoint(DonchianMaxBarsAgo) ? Donchian.Lower[DonchianMaxBarsAgo] : Donchian.Lower[0],
                 VolSma.IsValidDataPoint(0) ? VolSma[0] : barVolume,
-                EmaMtf.IsValidDataPoint(0) ? EmaMtf[0] : EmaFast[0],
-                EmaMtf.IsValidDataPoint(2) ? EmaMtf[2] : EmaMtf[0],
+                EmaMtf[0],
+                EmaMtf[MtfEmaMaxBarsAgo],
                 true);
         }
     }
