@@ -16,8 +16,8 @@ using UltronV1.Core.Domain;
 using UltronV1.Core.Dataset;
 using UltronV1.Core.Engine;
 using UltronV1.Core.Mnq;
-using UltronV1.Core.OrderFlow;
 using UltronV1.Core.Signals;
+using NinjaTrader.NinjaScript.Ultron;
 #endregion
 
 namespace NinjaTrader.NinjaScript.Indicators
@@ -25,21 +25,10 @@ namespace NinjaTrader.NinjaScript.Indicators
     public class UltronV1 : Indicator
     {
         UltronEngine _engine;
-        NtPrintLogger _logger;
+        UltronNtLogger _logger;
         UltronComparisonTracker _comparison;
-
-        EMA _emaFast;
-        EMA _emaSlow;
-        EMA _emaMtf;
-        ADX _adx;
-        ATR _atr;
-        RSI _rsi;
-        DonchianChannel _donchian;
-        SMA _volSma;
-
-        double _vwapNumerator;
-        double _vwapDenominator;
-        int _vwapBarCount;
+        UltronIndicatorBundle _indicators = new UltronIndicatorBundle();
+        UltronVwapTracker _vwap = new UltronVwapTracker();
         bool _vwapResetToday;
 
         string _hudTag = "UltronV1_HUD";
@@ -70,7 +59,7 @@ namespace NinjaTrader.NinjaScript.Indicators
             }
             else if (State == State.DataLoaded)
             {
-                _logger = new NtPrintLogger(this);
+                _logger = new UltronNtLogger(Print);
                 _comparison = new UltronComparisonTracker();
 
                 var cfg = new UltronConfig
@@ -95,14 +84,7 @@ namespace NinjaTrader.NinjaScript.Indicators
                 if (!_engine.IsContractValid)
                     BackBrush = Brushes.DarkRed;
 
-                _emaFast = EMA(Close, 9);
-                _emaSlow = EMA(Close, 21);
-                _adx = ADX(Close, 14);
-                _atr = ATR(Close, 14);
-                _rsi = RSI(Close, 14, 3);
-                _donchian = DonchianChannel(Close, 20);
-                _volSma = SMA(Volume, 20);
-                _emaMtf = EMA(Closes[1], 21);
+                _indicators.Create(this);
 
                 if (EnableComparisonMode)
                 {
@@ -123,18 +105,11 @@ namespace NinjaTrader.NinjaScript.Indicators
 
         protected override void OnMarketData(MarketDataEventArgs e)
         {
-            if (_engine == null || !_engine.IsContractValid)
-                return;
-            if (e.MarketDataType != MarketDataType.Last)
-                return;
-
-            _engine.ProcessTick(new TickEvent(
-                e.Time.ToUniversalTime().Ticks,
-                e.Price,
-                e.Volume,
-                GetCurrentBid(),
-                GetCurrentAsk(),
-                MnqContractSpec.PriceToTickIndex(e.Price)));
+            UltronTickFeed.ProcessLastTick(_engine, e, (out double bid, out double ask) =>
+            {
+                bid = GetCurrentBid();
+                ask = GetCurrentAsk();
+            });
         }
 
         protected override void OnBarUpdate()
@@ -183,20 +158,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 
         IndicatorSnapshot BuildIndicatorSnapshot()
         {
-            int accelBars = _engine.Config.AccelLookbackBars;
-            double adxPrev = _adx.IsValidDataPoint(accelBars) ? _adx[accelBars] : _adx[0];
-
-            return new IndicatorSnapshot(
-                _emaFast[0], _emaSlow[0], _adx[0], adxPrev, _rsi[0], _atr[0],
-                _vwapDenominator > 0 ? _vwapNumerator / _vwapDenominator : Close[0],
-                _vwapBarCount,
-                _donchian.Upper[0], _donchian.Lower[0],
-                _donchian.IsValidDataPoint(1) ? _donchian.Upper[1] : _donchian.Upper[0],
-                _donchian.IsValidDataPoint(1) ? _donchian.Lower[1] : _donchian.Lower[0],
-                _volSma.IsValidDataPoint(0) ? _volSma[0] : Volume[0],
-                _emaMtf.IsValidDataPoint(0) ? _emaMtf[0] : _emaFast[0],
-                _emaMtf.IsValidDataPoint(2) ? _emaMtf[2] : _emaMtf[0],
-                true);
+            return _indicators.BuildSnapshot(_vwap, Close[0], Volume[0], _engine.Config.AccelLookbackBars);
         }
 
         void UpdateVwap()
@@ -204,19 +166,13 @@ namespace NinjaTrader.NinjaScript.Indicators
             int timeEt = ToTime(Times[0][0]);
             if (timeEt >= 93000 && !_vwapResetToday)
             {
-                _vwapNumerator = 0;
-                _vwapDenominator = 0;
-                _vwapBarCount = 0;
+                _vwap.Reset();
                 _vwapResetToday = true;
             }
             if (timeEt < 93000)
                 _vwapResetToday = false;
 
-            double typical = (High[0] + Low[0] + Close[0]) / 3.0;
-            double vol = Volume[0] > 0 ? Volume[0] : 1;
-            _vwapNumerator += typical * vol;
-            _vwapDenominator += vol;
-            _vwapBarCount++;
+            _vwap.UpdateBar(High[0], Low[0], Close[0], Volume[0], treatZeroVolumeAsOne: true);
         }
 
         void DrawSignal(BarEvaluationResult result)
@@ -325,15 +281,6 @@ namespace NinjaTrader.NinjaScript.Indicators
         public SignalTier MinTierForArrow { get; set; }
 
         #endregion
-
-        sealed class NtPrintLogger : IUltronLogger
-        {
-            readonly Indicator _host;
-            public NtPrintLogger(Indicator host) { _host = host; }
-            public void Info(string message) { _host.Print(message); }
-            public void Warn(string message) { _host.Print(message); }
-            public void Error(string message) { _host.Print(message); }
-        }
     }
 }
 

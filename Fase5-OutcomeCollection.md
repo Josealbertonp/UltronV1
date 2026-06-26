@@ -8,11 +8,32 @@
 
 | Peça | Local | Função |
 |------|-------|--------|
-| `TradeCycleTracker` | `UltronV1.Core/Execution/` | Ciclo paper: open → MFE/MAE → stop/target/max bars → outcome |
+| `TradeCycleTracker` | `UltronV1.Core/Execution/` | **PaperBarSim** — simulador autoritativo: open → MFE/MAE → stop/target/max bars → outcome |
 | `OutcomeBuilder` | Core | R-multiple, PnL ticks/USD |
 | `PaperExecutionConfig` | Core | SL/TP/max bars (default 30/32 ticks, alinhado NR paper) |
 | `DatasetEngine.EnrichOutcome` | Core | Escreve `outcomes.jsonl` join por `signalId` |
 | `UltronV1Paper` | `NinjaTrader/UltronV1Paper.cs` | Strategy NT8 para Replay / Sim101 / Paper |
+
+## Path autoritativo (PaperBarSim)
+
+**Fonte da verdade para `outcomes.jsonl`:** `TradeCycleTracker` + `OutcomeBuilder` no Core (`executionMode = PaperBarSim`).
+
+| Path | Função | Grava outcomes? |
+|------|--------|-----------------|
+| `TradeCycleTracker` / PaperBarSim | Simulação bar-OHLC determinística (entry no close, stop/target/max bars) | **Sim — autoritativo** |
+| Sim101 (`SubmitSimOrders = true`) | Ordens visuais no chart / conta simulada NT8 | **Não — visual only** |
+
+Regras preservadas pelo PaperBarSim:
+
+1. Entry no close da barra de sinal.
+2. Sem exit na barra de entrada.
+3. Same-bar stop + target → **stop first** (conservador).
+4. Max bars → exit no close.
+5. MFE/MAE, R-multiple e PnL calculados por `OutcomeBuilder`.
+
+**Importante:** fills Sim101 podem divergir (slippage NT, fill intrabar, ambiguidade). Nunca usar Sim101 como fonte de validation/ML — apenas PaperBarSim.
+
+Log quando Sim101 ativo: `Sim101 visual only — outcome source PaperBarSim`
 
 ## Campos em `outcomes.jsonl`
 
@@ -41,7 +62,7 @@
 | Paper Target (ticks) | 32 | Take profit fixo |
 | Max Bars In Trade | 48 | Saída por tempo |
 | Min Tier For Entry | B | Mesmo critério do indicador |
-| Submit Sim101 Orders | true | Ordens visuais no Sim101 (outcome autoritativo = bar sim no Core) |
+| Submit Sim101 Orders (visual only) | **false** | Ordens visuais no Sim101 — **não** alteram outcomes (autoritativo = PaperBarSim) |
 
 ## Saída do dataset
 

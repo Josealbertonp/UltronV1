@@ -5,7 +5,7 @@ namespace UltronV1.Core.Dataset
     /// </summary>
     public static class UltronVersions
     {
-        public const string UltronVersion = "1.0.0";
+        public const string UltronVersion = "1.0.0-rc1";
         public const int FeatureSchemaVersion = 1;
         public const int ScoreVersion = 1;
         public const int DatasetRecordSchemaVersion = 1;
