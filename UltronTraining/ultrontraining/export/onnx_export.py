@@ -24,6 +24,9 @@ def export_to_onnx(
     if "xgboost" in name:
         return _export_xgboost(model, feature_count, output_path)
 
+    if "lightgbm" in name:
+        return _export_lightgbm(model, feature_count, output_path)
+
     initial_type = [("features", FloatTensorType([None, feature_count]))]
     options = {}
     try:
@@ -45,6 +48,24 @@ def export_to_onnx(
 def _export_catboost(model, output_path: Path) -> Path:
     model.save_model(str(output_path), format="onnx")
     return output_path
+
+
+def _export_lightgbm(model, feature_count: int, output_path: Path) -> Path:
+    try:
+        from onnxmltools.convert import convert_lightgbm
+        from onnxmltools.convert.common.data_types import FloatTensorType as OmlFloat
+
+        onnx_model = convert_lightgbm(
+            model,
+            initial_types=[("features", OmlFloat([None, feature_count]))],
+            target_opset=12,
+        )
+        with output_path.open("wb") as f:
+            f.write(onnx_model.SerializeToString())
+        return output_path
+    except Exception:
+        model.booster_.save_model(str(output_path), num_iteration=model.best_iteration_)
+        return output_path
 
 
 def _export_xgboost(model, feature_count: int, output_path: Path) -> Path:

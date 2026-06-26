@@ -83,6 +83,9 @@ def _run_walk_forward(
         X_tr, y_tr = fm.X.loc[tr_idx], fm.y.loc[tr_idx]
         X_te, y_te = fm.X.loc[te_idx], fm.y.loc[te_idx]
 
+        if len(np.unique(y_tr.values)) < 2 or len(np.unique(y_te.values)) < 2:
+            continue
+
         model = model_factory()
         model.fit(X_tr.values, y_tr.values)
         proba = model.predict_proba(X_te.values)[:, 1]

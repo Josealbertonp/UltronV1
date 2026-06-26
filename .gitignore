@@ -27,6 +27,8 @@
 **/datasets/*.parquet
 **/champion_run.log
 **/diag_*.log
+**/phase5_run.log
+**/_audit_output.json
 **/dataset/sessions/
 !UltronV1.Python/tests/fixtures/dataset/sessions/
 !UltronV1.Python/tests/fixtures/dataset/sessions/**

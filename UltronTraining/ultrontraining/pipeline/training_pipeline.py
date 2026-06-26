@@ -24,6 +24,7 @@ from ultrontraining.export.artifacts import export_artifacts
 from ultrontraining.export.onnx_export import export_to_onnx, verify_onnx
 from ultrontraining.metrics.classification import (
     compute_classification_metrics,
+    compute_trading_metrics,
     pr_curve_points,
     roc_curve_points,
 )
@@ -91,8 +92,26 @@ class TrainingPipeline:
             val_metrics = compute_classification_metrics(split.validation.y.values, val_proba_cal)
             test_metrics = compute_classification_metrics(split.test.y.values, test_proba)
 
-            pnl = split.test.pnl.values if split.test.pnl is not None else np.zeros(len(split.test.y))
-            thresholds = optimize_thresholds(test_proba, pnl, cfg.threshold_grid)
+            val_pnl = (
+                split.validation.pnl.values
+                if split.validation.pnl is not None
+                else np.zeros(len(split.validation.y))
+            )
+            test_pnl = (
+                split.test.pnl.values
+                if split.test.pnl is not None
+                else np.zeros(len(split.test.y))
+            )
+
+            # RC2 Phase 5: threshold chosen on validation only; test is read-only
+            tune_pnl = val_pnl if cfg.threshold_on_validation else test_pnl
+            tune_proba = val_proba_cal if cfg.threshold_on_validation else test_proba
+            thresholds = optimize_thresholds(tune_proba, tune_pnl, cfg.threshold_grid)
+            thresholds["tuned_on"] = "validation" if cfg.threshold_on_validation else "test"
+
+            rec_t = (thresholds.get("recommended") or {}).get("threshold", 0.5)
+            test_threshold_metrics = compute_trading_metrics(test_proba, test_pnl, threshold=rec_t)
+            val_threshold_metrics = compute_trading_metrics(val_proba_cal, val_pnl, threshold=rec_t)
 
             wf_expanding = wf_rolling = None
             if cfg.run_walk_forward:
@@ -134,7 +153,8 @@ class TrainingPipeline:
                 "calibration_method": best_cal.method,
                 "calibrator": best_cal,
                 "thresholds": thresholds,
-                "threshold_metrics": thresholds.get("recommended") or {},
+                "threshold_metrics": val_threshold_metrics,
+                "test_threshold_metrics": test_threshold_metrics,
                 "roc_curve": roc_curve_points(split.test.y.values, test_proba),
                 "pr_curve": pr_curve_points(split.test.y.values, test_proba),
                 "walk_forward_expanding": _wf_to_dict(wf_expanding),
@@ -151,13 +171,17 @@ class TrainingPipeline:
 
         champion_dir = out / "champion"
         onnx_path = champion_dir / "model.onnx"
-        export_to_onnx(
-            champion["model"],
-            champion["name"],
-            champion["feature_count"],
-            onnx_path,
-        )
-        onnx_verified = verify_onnx(onnx_path, champion["feature_count"])
+        onnx_verified = {"verified": False, "note": "export skipped"}
+        try:
+            export_to_onnx(
+                champion["model"],
+                champion["name"],
+                champion["feature_count"],
+                onnx_path,
+            )
+            onnx_verified = verify_onnx(onnx_path, champion["feature_count"])
+        except Exception as ex:
+            onnx_verified = {"verified": False, "note": f"onnx export failed: {ex}"}
         stages.append("onnx_export")
 
         training_report = {

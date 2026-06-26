@@ -291,9 +291,10 @@ def write_report(
         f"|--------|-------------|--------------|",
     ]
     for row in result.comparison:
-        lines.append(
-            f"| {row['name']} | {row.get('val_roc_auc')} | {row.get('test_roc_auc')} |"
-        )
+        model = row.get("model") or row.get("name", "?")
+        val_auc = row.get("roc_auc") or row.get("val_roc_auc")
+        test_auc = row.get("test_roc_auc")
+        lines.append(f"| {model} | {val_auc} | {test_auc} |")
     lines += [
         "",
         f"**Calibração escolhida:** {champ.get('calibration_method')}",
@@ -353,39 +354,67 @@ def write_report(
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def _latest_sel_dataset() -> tuple[Path, str, pd.DataFrame]:
+    sel_files = sorted(DATASETS_DIR.glob("dataset_v*_sel.parquet"))
+    if not sel_files:
+        raise SystemExit("No dataset_v*_sel.parquet found — run full pipeline first.")
+    path = sel_files[-1]
+    df = pd.read_parquet(path)
+    return path, path.stem, df
+
+
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Ultron champion training pipeline")
+    parser.add_argument(
+        "--skip-dataset",
+        action="store_true",
+        help="Reuse latest dataset_v*_sel.parquet (skip JSONL scan)",
+    )
+    args = parser.parse_args()
+
     t0 = time.perf_counter()
     sessions_dir = SESSIONS_ROOT / "sessions"
     print("=== ETAPA 1: audit sessions ===", flush=True)
     audit = audit_sessions(sessions_dir)
     print(json.dumps({k: v for k, v in audit.items() if k != "sessions"}, indent=2))
 
-    print("=== ETAPA 2: build dataset (outcomes-first) ===")
-    df = build_dataset_outcomes_first(SESSIONS_ROOT)
-    if len(df) < 80:
-        raise SystemExit(f"Insufficient trades: {len(df)} < 80")
-
-    DATASETS_DIR.mkdir(parents=True, exist_ok=True)
-    export = DatasetVersionManager(DATASETS_DIR).export(df, validate=True)
-    print(f"Exported {export.version}: {export.row_count} rows → {export.parquet_path}")
-
-    print("=== ETAPA 3: feature selection ===")
-    fm = build_feature_matrix(df)
-    X_sel, selection_report = select_features(fm.X, fm.y)
-    fm = type(fm)(X=X_sel, y=fm.y, feature_names=list(X_sel.columns), pnl=fm.pnl)
-    feat_report = validate_features(fm, min_rows=80)
     selection_path = OUTPUT_ROOT / "feature_selection_report.json"
-    selection_path.parent.mkdir(parents=True, exist_ok=True)
-    selection_path.write_text(json.dumps(selection_report, indent=2), encoding="utf-8")
 
-    # Re-export parquet with selected features + labels for training
-    label_cols = [c for c in df.columns if c in (
-        "label", "is_win", "is_loss", "realized_pnl_ticks", "timestamp_utc",
-        "trade_id", "session", "has_outcome",
-    )]
-    slim = pd.concat([fm.X.reset_index(drop=True), df[label_cols].reset_index(drop=True)], axis=1)
-    sel_version = f"{export.version}_sel"
-    export2 = DatasetVersionManager(DATASETS_DIR).export(slim, version=sel_version)
+    if args.skip_dataset:
+        print("=== ETAPA 2-3: skipped (reusing latest sel parquet) ===", flush=True)
+        export2_path, sel_version, bundle_df = _latest_sel_dataset()
+        export2 = type("Export", (), {"version": sel_version, "parquet_path": export2_path})()
+        df = bundle_df
+        selection_report = json.loads(selection_path.read_text(encoding="utf-8"))
+        fm = build_feature_matrix(df)
+        feat_report = validate_features(fm, min_rows=80)
+    else:
+        print("=== ETAPA 2: build dataset (outcomes-first) ===", flush=True)
+        df = build_dataset_outcomes_first(SESSIONS_ROOT)
+        if len(df) < 80:
+            raise SystemExit(f"Insufficient trades: {len(df)} < 80")
+
+        DATASETS_DIR.mkdir(parents=True, exist_ok=True)
+        export = DatasetVersionManager(DATASETS_DIR).export(df, validate=True)
+        print(f"Exported {export.version}: {export.row_count} rows -> {export.parquet_path}", flush=True)
+
+        print("=== ETAPA 3: feature selection ===", flush=True)
+        fm = build_feature_matrix(df)
+        X_sel, selection_report = select_features(fm.X, fm.y)
+        fm = type(fm)(X=X_sel, y=fm.y, feature_names=list(X_sel.columns), pnl=fm.pnl)
+        feat_report = validate_features(fm, min_rows=80)
+        selection_path.parent.mkdir(parents=True, exist_ok=True)
+        selection_path.write_text(json.dumps(selection_report, indent=2), encoding="utf-8")
+
+        label_cols = [c for c in df.columns if c in (
+            "label", "is_win", "is_loss", "realized_pnl_ticks", "timestamp_utc",
+            "trade_id", "session", "has_outcome",
+        )]
+        slim = pd.concat([fm.X.reset_index(drop=True), df[label_cols].reset_index(drop=True)], axis=1)
+        sel_version = f"{export.version}_sel"
+        export2 = DatasetVersionManager(DATASETS_DIR).export(slim, version=sel_version)
 
     print("=== ETAPA 4–8: training pipeline ===")
     pipeline = TrainingPipeline(
@@ -446,7 +475,7 @@ def main() -> None:
     )
     elapsed = (time.perf_counter() - t0) * 1000
     print(f"\nDone in {elapsed:.0f} ms")
-    print(f"Champion: {champ['name']} → {CHAMPION_DIR}")
+    print(f"Champion: {champ['name']} -> {CHAMPION_DIR}", flush=True)
     print(f"Report: {report_path}")
 
 

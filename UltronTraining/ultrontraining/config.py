@@ -25,6 +25,7 @@ class TrainingConfig:
     run_shap: bool = True
     shap_sample_size: int = 200
     model_names: list[str] | None = None
+    threshold_on_validation: bool = True  # RC2 Phase 5: never tune threshold on test
 
     def resolve_output(self) -> Path:
         self.output_dir.mkdir(parents=True, exist_ok=True)

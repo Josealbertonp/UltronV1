@@ -28,14 +28,18 @@ def compute_shap_report(
         return {"status": "unsupported_model", "model": model_name}
 
     if isinstance(shap_values, list):
-        sv = shap_values[1]
+        sv = shap_values[1] if len(shap_values) > 1 else shap_values[0]
     else:
         sv = shap_values
 
-    mean_abs = np.abs(sv).mean(axis=0)
+    sv = np.asarray(sv)
+    if sv.ndim == 3:
+        sv = sv[:, :, 1]
+
+    mean_abs = np.abs(sv).mean(axis=0).reshape(-1)
     importance = sorted(
         [{"feature": feature_names[i], "mean_abs_shap": round(float(mean_abs[i]), 6)}
-         for i in range(len(feature_names))],
+         for i in range(min(len(feature_names), len(mean_abs)))],
         key=lambda x: x["mean_abs_shap"],
         reverse=True,
     )
@@ -74,6 +78,9 @@ def _build_explainer(model, model_name: str, X_sample: pd.DataFrame):
 
 
 def _local_sample(sv, feature_names, X_sample, n=5):
+    sv = np.asarray(sv)
+    if sv.ndim == 3:
+        sv = sv[:, :, 1]
     rows = []
     for i in range(min(n, len(X_sample))):
         contrib = sorted(

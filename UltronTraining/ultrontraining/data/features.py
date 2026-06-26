@@ -32,6 +32,8 @@ def select_feature_columns(df: pd.DataFrame) -> list[str]:
             cols.append(c)
         elif c.startswith("feat_"):
             cols.append(c)
+        elif c.startswith("der_"):
+            cols.append(c)
         elif c in ("score", "long_score", "short_score", "tier", "archetype", "regime",
                     "hour", "minute", "day_of_week", "order_flow_passed",
                     "gates_long_allowed", "gates_short_allowed"):
