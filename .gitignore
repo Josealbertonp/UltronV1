@@ -24,6 +24,8 @@
 **/models/
 **/reports/
 **/dataset/sessions/
+!UltronV1.Python/tests/fixtures/dataset/sessions/
+!UltronV1.Python/tests/fixtures/dataset/sessions/**
 
 # IDE / OS
 .idea/
