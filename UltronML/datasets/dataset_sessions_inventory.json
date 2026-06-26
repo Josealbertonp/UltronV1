@@ -1,0 +1,290 @@
+{
+  "generatedAtUtc": "2026-06-26T22:01:33.891060+00:00",
+  "sourcePath": "C:\\Users\\alber\\Documents\\NinjaTrader 8\\UltronV1\\dataset",
+  "note": "Raw JSONL NOT in git (~33GB). Copy dataset folder manually before PC format.",
+  "sessionCount": 35,
+  "sessionsWithOutcomes": 22,
+  "totalOutcomes": 2007,
+  "sessions": [
+    {
+      "sessionId": "099d08bd3000",
+      "opportunities_mb": 797.44,
+      "outcomes_mb": 0.04,
+      "outcome_count": 83,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "0cc8d5bd99ea",
+      "opportunities_mb": 5105.27,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "15ecdf56be04",
+      "opportunities_mb": 3366.53,
+      "outcomes_mb": 0.05,
+      "outcome_count": 114,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "1c1d62008f59",
+      "opportunities_mb": 9.72,
+      "outcomes_mb": 0.05,
+      "outcome_count": 107,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "2984893c8b6e",
+      "opportunities_mb": 5170.47,
+      "outcomes_mb": 0.06,
+      "outcome_count": 124,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "2ca680624a95",
+      "opportunities_mb": 980.47,
+      "outcomes_mb": 0.03,
+      "outcome_count": 69,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "3509278f75bf",
+      "opportunities_mb": 210.6,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "3cb1e335498b",
+      "opportunities_mb": 1209.52,
+      "outcomes_mb": 0.03,
+      "outcome_count": 77,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "4a10784f6f5b",
+      "opportunities_mb": 5028.7,
+      "outcomes_mb": 0.07,
+      "outcome_count": 156,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "5052ff2eef63",
+      "opportunities_mb": 23.8,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "570be9b5e90e",
+      "opportunities_mb": 0.0,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "5b173693c907",
+      "opportunities_mb": 1.92,
+      "outcomes_mb": 0.03,
+      "outcome_count": 59,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "5b699d7fca35",
+      "opportunities_mb": 2.02,
+      "outcomes_mb": 0.03,
+      "outcome_count": 59,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "5eb5f7df6da2",
+      "opportunities_mb": 481.18,
+      "outcomes_mb": 0.03,
+      "outcome_count": 68,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "5ef378b86465",
+      "opportunities_mb": 883.94,
+      "outcomes_mb": 0.04,
+      "outcome_count": 97,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "60ee2903d7fb",
+      "opportunities_mb": 7.67,
+      "outcomes_mb": 0.03,
+      "outcome_count": 76,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "74e498f5c0b2",
+      "opportunities_mb": 2.3,
+      "outcomes_mb": 0.03,
+      "outcome_count": 61,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "76bba3ee5af5",
+      "opportunities_mb": 1325.98,
+      "outcomes_mb": 0.04,
+      "outcome_count": 93,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "7dafb340e936",
+      "opportunities_mb": 0.0,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "7dc846a403cf",
+      "opportunities_mb": 2.3,
+      "outcomes_mb": 0.03,
+      "outcome_count": 61,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "94c688ffdbe5",
+      "opportunities_mb": 3.14,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "953250d3c4ac",
+      "opportunities_mb": 14.26,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "a140e064dffd",
+      "opportunities_mb": 0.0,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "a9a27c44e927",
+      "opportunities_mb": 12.3,
+      "outcomes_mb": 0.03,
+      "outcome_count": 69,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "aff913465f11",
+      "opportunities_mb": 1255.71,
+      "outcomes_mb": 0.04,
+      "outcome_count": 82,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "b04c9b05f6c9",
+      "opportunities_mb": 3113.15,
+      "outcomes_mb": 0.02,
+      "outcome_count": 54,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "b6a9d908680a",
+      "opportunities_mb": 2540.84,
+      "outcomes_mb": 0.04,
+      "outcome_count": 81,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "ba12d372af8a",
+      "opportunities_mb": 4572.1,
+      "outcomes_mb": 0.07,
+      "outcome_count": 156,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "bbc80a1a350e",
+      "opportunities_mb": 0.0,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "c2946078a6bb",
+      "opportunities_mb": 0.0,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "c30b4a7f47c4",
+      "opportunities_mb": 12.92,
+      "outcomes_mb": 0.09,
+      "outcome_count": 192,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "c97703bf5ae6",
+      "opportunities_mb": 12.9,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "d97f1101e217",
+      "opportunities_mb": 2.8,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    },
+    {
+      "sessionId": "ede9a719ba88",
+      "opportunities_mb": 2.91,
+      "outcomes_mb": 0.03,
+      "outcome_count": 69,
+      "has_opportunities": true,
+      "has_outcomes": true
+    },
+    {
+      "sessionId": "ee2ea391eb63",
+      "opportunities_mb": 0.0,
+      "outcomes_mb": 0.0,
+      "outcome_count": 0,
+      "has_opportunities": true,
+      "has_outcomes": false
+    }
+  ]
+}
