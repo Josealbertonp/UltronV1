@@ -116,6 +116,7 @@ if (-not $WhatIfPreference -and (Test-NinjaTraderRunning)) {
 $DeployMap = @(
     @{ Source = $CoreDllSource; Dest = Join-Path $CustomRoot "UltronV1.Core.dll" }
     @{ Source = Join-Path $NinjaTraderSource "UltronV1.cs"; Dest = Join-Path $CustomRoot "Indicators\UltronV1.cs" }
+    @{ Source = Join-Path $NinjaTraderSource "UltronComparisonTracker.cs"; Dest = Join-Path $CustomRoot "Indicators\UltronComparisonTracker.cs" }
     @{ Source = Join-Path $NinjaTraderSource "UltronV1Paper.cs"; Dest = Join-Path $CustomRoot "Strategies\UltronV1Paper.cs" }
 )
 
