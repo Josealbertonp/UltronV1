@@ -10,8 +10,8 @@ Format: phases (functional history) + RC1 sprints (engineering history).
 
 **Release Candidate 1** — stabilization, tests, docs, release engineering.  
 **Documented version:** `1.0.0-rc1`  
-**Assembly version in code (pre-S4-VER):** `1.0.0` (`UltronVersions.UltronVersion`)  
-**Branch reference:** `feature/rc1-sprint4` @ `ca4aade`
+**Assembly version in code:** `1.0.0-rc1` (`UltronVersions.UltronVersion`, S4-VER)  
+**Branch reference:** `feature/rc1-sprint4` @ `4b0a865`
 
 **Test baseline:** 80 C# + 18 Python = **98 tests**
 
@@ -118,15 +118,15 @@ See [Fase5-OutcomeCollection.md](Fase5-OutcomeCollection.md).
 
 ---
 
-## Sprint 4 — RC1 release engineering (in progress)
+## Sprint 4 — RC1 release engineering (complete)
 
-| ID | Deliverable | Status @ `ca4aade` |
+| ID | Deliverable | Status @ `4b0a865` |
 |----|-------------|-------------------|
 | **S4-DC** | Dead code removal — `MarketContext`, `FeatureVector.Clone()`, `CurrentOrderFlow`, dead `_vwapResetToday` in Paper | ✅ `72c7604` |
 | **S4-BUILD** | `scripts/build.ps1`, `scripts/test_all.ps1` — export → build → test → schema drift gate | ✅ `ca4aade` |
-| **S4-NS** | RC1 documentation — ARCHITECTURE, DEPLOY, CHANGELOG, RC1_CHECKLIST, RC1_KNOWN_LIMITATIONS | ✅ (this commit pending) |
-| S4-DEPLOY | `deploy_nt8.ps1` | ☐ Not started |
-| S4-VER | Version bump `1.0.0-rc1`, tag `v1.0.0-rc1` | ☐ Not started |
+| **S4-NS** | RC1 documentation — ARCHITECTURE, DEPLOY, CHANGELOG, RC1_CHECKLIST, RC1_KNOWN_LIMITATIONS | ✅ `ffb8643` |
+| **S4-DEPLOY** | `deploy_nt8.ps1` (8 files incl. `UltronComparisonTracker.cs`) | ✅ `da89594`, manifest fix `4b0a865` |
+| **S4-VER** | Version bump `1.0.0-rc1`, RELEASE_NOTES, VERSION.md | ✅ `40f5c81` |
 
 ---
 
@@ -143,4 +143,4 @@ Changes are limited to: metadata honesty (C1), schema unification (C2), observab
 
 ---
 
-*Changelog aligned with branch `feature/rc1-sprint4` @ `ca4aade`.*
+*Changelog aligned with branch `feature/rc1-sprint4` @ `4b0a865`.*

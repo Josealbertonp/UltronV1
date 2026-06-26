@@ -99,10 +99,10 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md) · [DEPLOY.md](DEPLOY.md) · [RC1_CH
 - Overlap with Ultron **Accepted** vs NR **drawn** signals is not decision-equivalent.
 - Comparator may under/over-estimate overlap (C9 — doc only in RC1; **no tracker fix**).
 
-### deploy_nt8.ps1 does not exist
+### deploy_nt8.ps1
 
-- NT8 deploy is **manual** copy steps in [DEPLOY.md](DEPLOY.md).
-- Automated deploy script planned for RC2 (S4-DEPLOY backlog).
+- Automated NT8 deploy: `scripts/deploy_nt8.ps1` copies **8** Ultron-owned files (DLL, Indicator, `UltronComparisonTracker.cs`, Strategy, 4 Shared).
+- Manual steps remain in [DEPLOY.md](DEPLOY.md).
 
 ---
 
@@ -118,10 +118,10 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md) · [DEPLOY.md](DEPLOY.md) · [RC1_CH
 - Regex-based JSON reader sufficient for controlled manifest files only.
 - Not a general-purpose JSON parser.
 
-### Assembly version vs documented RC1
+### Assembly version
 
-- Code still reports `UltronVersions.UltronVersion = "1.0.0"` until S4-VER.
-- Documentation uses **`1.0.0-rc1`** as target release identifier.
+- Code reports `UltronVersions.UltronVersion = "1.0.0-rc1"` since S4-VER (`40f5c81`).
+- Git tag `v1.0.0-rc1` is optional and pending operator sign-off.
 
 ---
 
@@ -129,8 +129,7 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md) · [DEPLOY.md](DEPLOY.md) · [RC1_CH
 
 | Area | Planned direction |
 |------|-------------------|
-| **Deploy** | `scripts/deploy_nt8.ps1` with `-WhatIf` |
-| **Version** | Bump to `1.0.0-rc1`, tag `v1.0.0-rc1` (S4-VER) |
+| **Version** | Git tag `v1.0.0-rc1` (optional, post sign-off) |
 | **Dataset** | OutcomeLinked persistence; outcome deduplication |
 | **Core perf** | Disable unused footprint; lazy BuildState |
 | **ML** | Document + optional wire MlAdvisor in NT8 host |
@@ -151,4 +150,4 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md) · [DEPLOY.md](DEPLOY.md) · [RC1_CH
 
 ---
 
-*Limitations doc aligned with branch `feature/rc1-sprint4` @ `ca4aade`.*
+*Limitations doc aligned with branch `feature/rc1-sprint4` @ `4b0a865`.*

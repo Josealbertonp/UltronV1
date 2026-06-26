@@ -1,7 +1,7 @@
 # RC1 Checklist — Ultron V1
 
 **Version (documented):** `1.0.0-rc1`  
-**Branch reference:** `feature/rc1-sprint4` @ `ca4aade`
+**Branch reference:** `feature/rc1-sprint4` @ `4b0a865`
 
 Related: [DEPLOY.md](DEPLOY.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [RC1_KNOWN_LIMITATIONS.md](RC1_KNOWN_LIMITATIONS.md) · [Ultron Validation Protocol v1.md](Ultron%20Validation%20Protocol%20v1.md)
 
@@ -44,16 +44,17 @@ Use this checklist before declaring RC1 ready and before starting **official Rep
 
 ---
 
-## 4. Deploy NinjaTrader 8 (manual)
+## 4. Deploy NinjaTrader 8
 
 - [ ] `UltronV1.Core.dll` copied to `Documents\NinjaTrader 8\bin\Custom\`
 - [ ] `NinjaTrader/Shared/*.cs` copied to Custom (e.g. `Custom\Ultron\Shared\`)
 - [ ] `UltronV1.cs` → `Custom\Indicators\`
+- [ ] `UltronComparisonTracker.cs` → `Custom\Indicators\`
 - [ ] `UltronV1Paper.cs` → `Custom\Strategies\`
 - [ ] NinjaScript **F5** compile succeeded
 - [ ] `UltronV1.Core.dll` reference present in NinjaScript Editor
 
-**Note:** `scripts/deploy_nt8.ps1` does not exist yet — deploy is manual ([DEPLOY.md](DEPLOY.md)).
+**Automated (preferred):** `.\scripts\deploy_nt8.ps1 -WhatIf -Force` then `.\scripts\deploy_nt8.ps1 -Force` ([DEPLOY.md](DEPLOY.md)).
 
 ---
 
@@ -114,8 +115,8 @@ Use this checklist before declaring RC1 ready and before starting **official Rep
 | S4-DC | Dead code cleanup | S4 | ☑ |
 | S4-BUILD | build.ps1 / test_all.ps1 | S4 | ☑ |
 | S4-NS | RC1 documentation | S4 | ☑ |
-| S4-DEPLOY | deploy_nt8.ps1 | S4 | ☐ |
-| S4-VER | Version tag v1.0.0-rc1 | S4 | ☐ |
+| S4-DEPLOY | deploy_nt8.ps1 | S4 | ☑ `da89594`, manifest fix `4b0a865` |
+| S4-VER | Version `1.0.0-rc1`, RELEASE_NOTES, VERSION.md | S4 | ☑ `40f5c81` |
 
 ---
 
@@ -142,4 +143,4 @@ Per [Ultron Validation Protocol v1.md](Ultron%20Validation%20Protocol%20v1.md):
 
 ---
 
-*Checklist aligned with branch `feature/rc1-sprint4` @ `ca4aade`.*
+*Checklist aligned with branch `feature/rc1-sprint4` @ `4b0a865`.*

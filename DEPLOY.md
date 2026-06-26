@@ -15,7 +15,7 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md) · [RC1_CHECKLIST.md](RC1_CHECKLIST.
 | Git | any | Schema drift check in build.ps1 |
 | NinjaTrader 8 | installed | Indicator, Strategy, Replay |
 
-**Note:** `scripts/deploy_nt8.ps1` does **not** exist yet (planned RC2). Deploy NT8 steps below are manual.
+**Note:** `scripts/deploy_nt8.ps1` automates NT8 deploy (see [NinjaTrader 8 — automated deploy](#ninjatrader-8--automated-deploy)). Manual copy steps remain documented below.
 
 ---
 
@@ -81,6 +81,32 @@ Outputs:
 
 ---
 
+## NinjaTrader 8 — automated deploy
+
+Build Core first (`.\scripts\build.ps1` or `dotnet build UltronV1.Core -c Release`), then:
+
+```powershell
+# Preview (no copy)
+.\scripts\deploy_nt8.ps1 -WhatIf -Force
+
+# Deploy (close NinjaTrader first)
+.\scripts\deploy_nt8.ps1 -Force
+```
+
+Copies **8** Ultron-owned files to `Documents\NinjaTrader 8\bin\Custom\`:
+
+- `UltronV1.Core.dll`
+- `Indicators\UltronV1.cs`
+- `Indicators\UltronComparisonTracker.cs`
+- `Strategies\UltronV1Paper.cs`
+- `Ultron\Shared\` (4 `.cs` files)
+
+After deploy: open NinjaScript Editor and press **F5** to compile.
+
+Parameters: `-NinjaTraderPath`, `-DocumentsPath`, `-WhatIf`, `-Force`. Blocks if NinjaTrader is running (except `-WhatIf`).
+
+---
+
 ## NinjaTrader 8 — manual deploy
 
 Paths assume default NT8 user folder: `%USERPROFILE%\Documents\NinjaTrader 8\`
@@ -128,7 +154,7 @@ Namespace: `NinjaTrader.NinjaScript.Ultron`. Required by both Indicator and Pape
 **Source:** `NinjaTrader/UltronV1.cs`  
 **Destination:** `Documents\NinjaTrader 8\bin\Custom\Indicators\UltronV1.cs`
 
-Optional (Comparison Mode only): `NinjaTrader/UltronComparisonTracker.cs` → same `Indicators\` folder or `Custom\Ultron\`.
+**Required for Indicator compile:** `NinjaTrader/UltronComparisonTracker.cs` → `Documents\NinjaTrader 8\bin\Custom\Indicators\UltronComparisonTracker.cs` (included in `deploy_nt8.ps1`).
 
 ### 5. Install Strategy
 
@@ -272,4 +298,4 @@ Full rules: [Fase5-OutcomeCollection.md](Fase5-OutcomeCollection.md)
 
 ---
 
-*Deploy guide aligned with branch `feature/rc1-sprint4` @ `ca4aade`.*
+*Deploy guide aligned with branch `feature/rc1-sprint4` @ `4b0a865`.*
